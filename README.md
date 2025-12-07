@@ -175,6 +175,8 @@ FireOps integrates sensors, communication modules, backend services, and command
 - Local inference of **RONIN AI inertial model** (tested)  
 - Local raw data storage (black-box mode)
 
+Additional functionlity info: The RONIN model can be exporter for mobile inference as a lightweight PyTorch Mobile neural network. The IMU based position inference can therefore operate fully on mobile without connection to the external network.
+
 ### Backend (Python/Flask)
 - Data ingestion from Android app  
 - RONIN inertial localization model inference  
