@@ -16,10 +16,10 @@ It integrates **inertial navigation**, **UWB ranging**, **biometric sensing**, a
 | M1 | Wizualizacja mapy 2D budynku z pozycjami strażaków | ✔️ zrobione |
 | M2 | Wskaźnik kondygnacji dla każdego strażaka | do zrobienia |
 | M3 | Panel parametrów: tętno, bateria, stan ruchu | ✔️ zrobione |
-| M4 | Alarm MAN-DOWN po 30s bezruchu | zrobione |
+| M4 | Alarm MAN-DOWN po 30s bezruchu | ✔️ zrobione |
 | M5 | Status beaconów na mapie (aktywne/nieaktywne) | do zrobienia ale uwzględnione w obliczeniach pozycji |
-| M6 | Dokumentacja HW tagu nieśmiertelnika (schemat + BOM) | ✔️ zrobione |
-| M7 | Dokumentacja HW beacona UWB (schemat + BOM) | zrobione |
+| M6 | Dokumentacja HW tagu nieśmiertelnika (schemat + BOM) | ✔️ zrobione, [ SEE DOCS ](HW_SPEC.md) |
+| M7 | Dokumentacja HW beacona UWB (schemat + BOM) |  do zrobienia |
 | M8 | Lista strażaków z filtrowaniem i przejściem do widoku mapy | ✔️ zrobione |
 | M9 | Ekran szczegółów strażaka z alertami, trendami i ostatnią pozycją | ✔️ zrobione |
 | M10 | Widok aktywnych alertów z sortowaniem | ✔️ zrobione |
@@ -32,11 +32,11 @@ It integrates **inertial navigation**, **UWB ranging**, **biometric sensing**, a
 | D1 | Algorytm fuzji danych (EKF/UKF) | ✔️ zrobione |
 | D2 | Wizualizacja 3D budynku | pominięte |
 | D3 | Historia trajektorii (odtwarzanie ruchu) | ✔️ zrobione |
-| D4 | Dokumentacja bramki NIB | ✔️ zrobione |
+| D4 | Dokumentacja bramki NIB | ✔️ zrobione,  [ SEE DOCS ](NIB_GATE_DOCS.md)  |
 | D5 | Zarządzanie zespołami (roty/sekcje) | do zrobienia |
 | D6 | Scenariusze symulacji (fire basement, tunnel) | ✔️ zrobione (demo + symulator) |
 | D7 | Moduł analizy po akcji (AAR) | ✔️ zrobiony backend z raportami PDF |
-| D8 | Integracja z systemami PSP – koncepcja | ✔️ zrobione (Tactical Assult Kit) |
+| D8 | Integracja z systemami PSP – koncepcja | ✔️ zrobione (Tactical Assult Kit), [ SEE DOCS ](tak-integration/setup-tak-integration.md) |
 
 
 ### 🟢 BONUS
@@ -50,7 +50,7 @@ It integrates **inertial navigation**, **UWB ranging**, **biometric sensing**, a
 | B5 | Eksport raportu po akcji (CSV/PDF) | ✔️ zrobione |
 | B6 | Tryb szkoleniowy z checklistą instruktora | pominięte |
 | B7 | Mobilna aplikacja dla dowódcy | ✔️ zrobione (panel dowódcy www jest RWD) |
-| B8 | Rozszerzenie systemu pod inne służby | ✔️ zrobione (Tactical Assult Kit) |
+| B8 | Rozszerzenie systemu pod inne służby | ✔️ zrobione (Tactical Assult Kit)  [ SEE DOCS ](tak-integration/setup-tak-integration.md)  |
 
 
 
