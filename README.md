@@ -198,7 +198,27 @@ Features:
 ### TAK Integration
 - Dockerized TAK Server (Linux)  
 - Displaying firefighters and objects on TAK platform  
-- Sharing mission data with civil and military responders  
+- Sharing mission data with civil and military responders
+
+### PostgreSQL Integration
+FireOps uses a PostgreSQL database to store operational, biometric, and localization data collected during missions.
+
+**Stored data includes:**
+- Raw and processed IMU data
+- RONIN / UWB estimated positions  
+- Biometric streams (HR, SpO₂, temperature, respiration)  
+- Critical events: man-down, SOS, high HR, low oxygen  
+- Alerts, mission markers, tracks, and heatmaps  
+
+**Reporting capabilities:**
+- After-action mission reports (PDF)  
+- Trajectory reconstruction and area coverage analysis  
+- Event timelines and biometric trend summaries  
+- Integration with BI tools (e.g., Metabase / Superset)
+
+This enables post-mission analysis, training insights, and improved decision-making.
+
+[Setup information](manage_telemetry_db/setup_manage_telemetry_db.md)
 
 ---
 
