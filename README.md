@@ -67,6 +67,7 @@ python mock_ubw_client.py # fetches data from https://niesmiertelnik.replit.app/
 
 Open http://localhost:5000/firefighters to view json data incoming to the backend server.
 
+📔 See [Full API Docs](API_DOCS.md)
 🔍 [See `firefighters/` endpoint on HACKNATION demo backend server](https://19a4c82bfcd8.ngrok-free.app/firefighters)
 
 ### Frontend application
