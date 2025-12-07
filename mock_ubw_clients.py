@@ -4,7 +4,7 @@ import json
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 SIMULATION_API_URL = "https://niesmiertelnik.replit.app/api/v1/firefighters/"
-FLASK_APP_URL = "https://93df9d0e6824.ngrok-free.app/calculate_position_uwb/"
+FLASK_APP_URL = "https://19a4c82bfcd8.ngrok-free.app/calculate_position_uwb/"
 HEADERS = {"ngrok-skip-browser-warning": "true"}
 
 def fetch_firefighters():

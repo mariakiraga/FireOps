@@ -1,3 +1,4 @@
+from datetime import datetime
 import sys
 import os
 import time
@@ -15,6 +16,8 @@ from long_lat_calculation import local_to_gps
 sys.path.append(os.path.join("source"))
 from ronin_resnet import get_model  
 from preprocessing.gen_dataset_v2 import interpolate_vector_linear
+
+from db_manager import PSPDatabase, load_db_config
 
 # ---- Load model globally ----
 device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
@@ -37,11 +40,90 @@ Positions as given timestamps are replaced with real positions estimated by the 
 
 
 """
+## Init database connection
+try:
+    config = load_db_config("FireOps/config.ini")
+    db = PSPDatabase(config)
+    db.connect()
+except Exception as e:
+    print(f"DB init Error: {e}")
+
+
 
 
 # ---- Flask app ----
 app = Flask(__name__)
 
+
+def insert_full_figherfighter_data(self, ff_full_data):
+
+    def split_name(full_name):
+        """Rozdziela 'Jan Kowalski' na ('Jan', 'Kowalski')."""
+        if not full_name:
+            return "N/N", "N/N"
+        parts = full_name.strip().split(' ', 1)
+        if len(parts) == 2:
+            return parts[0], parts[1]
+        return parts[0], ""
+
+    ff_data = ff_full_data.get("firefighter", {})
+    device_data = ff_full_data.get("device", {})
+    pos_data = ff_full_data.get("position", {}).get("gps", {})
+    vitals = ff_full_data.get("vitals", {})
+    env = ff_full_data.get("environment", {})
+
+    scba_data = ff_full_data.get("scba", {})
+    
+    # --- 1. Strażak ---
+    f_name, l_name = split_name(ff_data.get("name"))
+    ff_db_id = db.get_or_create_firefighter(
+        f_name, l_name, ff_data.get("rank"), ff_data.get("role")
+    )
+
+    # --- 2. Zespół (jeśli jest w JSON) ---
+    team_name = ff_data.get("team")
+    if team_name:
+        # Generujemy numer np. na podstawie nazwy lub bierzemy z JSON jeśli jest
+        team_db_id = db.get_or_create_team(team_name, f"TM-{team_name[:3].upper()}")
+
+
+    # --- 3. Urządzenie ---
+    dev_db_id = db.get_or_create_device(
+        "tag_module", 
+        device_data.get("firmware_version", "1.0"), 
+        ff_db_id,
+        is_online=True
+    )
+
+    # --- 4. Telemetria ---
+    # Parsowanie czasu (API zwraca np. '2025-12-06T18:24:31.450Z')
+    ts_str = ff_full_data.get("timestamp")
+    # Python < 3.11 słabo radzi sobie z 'Z' na końcu, zamieniamy na '+00:00'
+    if ts_str and ts_str.endswith('Z'):
+        ts_str = ts_str[:-1] + '+00:00'
+    
+    telemetry_dict = {
+        "device_id": dev_db_id,
+        "firefighter_id": ff_db_id,
+        "ts": ts_str or datetime.now(),
+        "lat": pos_data.get("lat"),
+        "lng": pos_data.get("lon"),
+        "heart_rate": vitals.get("heart_rate_bpm"),
+        "body_temperature": vitals.get("skin_temperature_c"), # Używamy skin temp jako body temp
+        "ambient_temperature": env.get("temperature_c"),
+        "battery_level": device_data.get("battery_percent"),
+        "steps_total": vitals.get("step_count"),
+        "seconds_still": vitals.get("stationary_duration_s"),
+        "is_moving": (vitals.get("motion_state") != "stationary"),
+        "connectivity_type": device_data.get("connection_primary", "unknown"),
+        "status": ff_full_data.get("pass_status", {}).get("status", "unknown")
+    }
+
+    db.insert_telemetry(telemetry_dict)
+
+    # Zatwierdzamy wszystkie inserty telemetrii
+    db.conn.commit()
+    print("Pomyślnie zaimportowano dane bieżącego cyklu.")
 
 def dump_firefighter_data(data):
     """
@@ -179,6 +261,7 @@ def predict_position(firefighter_id):
         firefighters_data["firefighters"].append(new_data)
     
         dump_firefighter_data(firefighters_data)
+    
         
         return jsonify({
             "firefighter_id": firefighter_id,
@@ -206,12 +289,16 @@ def calculate_position_uwb(firefighter_id):
     firefighters_data = data
     for ff in firefighters_data.get("firefighters", []):
         if ff.get("firefighter", {}).get("id") == firefighter_id:
+            mock_pos_x = ff['position']['x']
+            mock_pos_y = ff['position']['y']
             ff["position"] = {
                 "x": float(estimated_position[0]),
                 "y": float(estimated_position[1]),
                 "z": float(estimated_position[2]),
                 "floor": 0,
-                "source": "uwb_fusion"
+                "source": "uwb_fusion",
+                "mock_pos_x": mock_pos_x,
+                "mock_pos_y": mock_pos_y
             }
             ff["timestamp"] = time.strftime("%Y-%m-%dT%H:%M:%S.%fZ", time.gmtime())
             ff["gps"] = local_to_gps(float(estimated_position[0]), float(estimated_position[1]))
