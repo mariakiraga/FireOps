@@ -187,6 +187,7 @@ More information: https://tak.gov/
 The NIB Gate is a communication bridge designed to connect an external supervisory system with the NIB system (a specialized interface or protocol used for equipment integration). Its purpose is to translate, isolate, and safely exchange data between two systems that normally cannot communicate directly due to different protocols, voltage levels, or security requirements.
 
 See [NIB Gate specification here](NIB_GATE_DOCS.md)
+
 ---
 ## Use Case: “Fireline”  
 **Scenario:** firefighters operating in a chemical warehouse fire.
