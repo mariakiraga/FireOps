@@ -7,7 +7,7 @@
 header('Content-Type: application/json; charset=utf-8');
 
 // Upstream URL
-$remoteUrl = 'https://19a4c82bfcd8.ngrok-free.app/firefighters/';
+$remoteUrl = 'https://localhost:5000/firefighters/';
 
 // Zezwalamy tylko na GET
 if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
