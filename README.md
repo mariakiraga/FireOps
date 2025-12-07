@@ -3,6 +3,8 @@
 FireOps is an advanced system designed for **precise real-time tracking** and **biometric monitoring** of firefighters during operations, even in **GPS-denied environments** such as indoor structures, tunnels, or industrial facilities.  
 It integrates **inertial navigation**, **UWB ranging**, **biometric sensing**, and **intelligent analysis** to enhance safety, operational awareness, and decision-making.
 
+[🔥CHECK OUT LIVE DEMO](https://portal.forpet.biz/hacknation/#)
+
 ---
 
 ## Quick start
@@ -15,9 +17,38 @@ python mock_ubw_client.py # fetches data from https://niesmiertelnik.replit.app/
 ```
 
 Open http://localhost:5000/firefighters to view json data incoming to the backend server.
+
 ### Frontend application
 
+
+Ensure the Apache Web Server is running via your control panel.
+Open your browser and navigate to `FireOps/frontendWWW/`
+
+`http://localhost/<path to FireOps/frontendWWW>/index.html`
+
+
+
 ### Android application
+
+Compile the app using Android Studio.
+- Open the project in Android Studio.
+- Connect a device or start an emulator.
+- At the top menu choose: Build → Make Project
+
+To run the app: Press Run ▶ or use Shift + F10
+
+To build an APK or App Bundle:
+Build → Build Bundle(s) / APK(s) → Build APK(s)
+or
+Build Bundle(s) / APK(s) → Build Bundle(s)
+
+APK will be in:
+```
+app/build/outputs/apk/debug/app-debug.apk
+app/build/outputs/apk/release/app-release.apk
+```
+### TAK-Server UI
+[See TAK-Server setup information here.](tak-integration/setup-tak-integration.md)
 
 ---
 
