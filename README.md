@@ -148,6 +148,8 @@ FireOps integrates with TAK to enable:
 
 More information: https://tak.gov/
 
+[Setup information](tak-integration/setup-tak-integration.md)
+
 ---
 
 ## Use Case: “Fireline”  
