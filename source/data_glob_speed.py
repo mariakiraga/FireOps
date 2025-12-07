@@ -11,7 +11,164 @@ from torch.utils.data import Dataset
 from data_utils import CompiledSequence, select_orientation_source, load_cached_sequences
 
 
+class StreamingIMUDataset(Dataset):
+    """
+    Streaming IMU dataset:
+      - append 1-second chunks (200 samples)
+      - each chunk contains: gyro(3), acc(3), game_rv(4)
+      - __getitem__ produces:
+            glob_gyro[window] + glob_acc[window]
+        shaped as (6, window_size)
+    """
+    def __init__(self, window_size=200, stride=20):
+        self.window_size = window_size
+        self.stride = stride
+
+
+        # internal buffers (grow as data arrives)
+        self.gyro_buf = np.zeros((0, 3), dtype=np.float32)
+        self.acc_buf  = np.zeros((0, 3), dtype=np.float32)
+        self.rv_buf   = np.zeros((0, 4), dtype=np.float32)   # rotation vector quaternion
+
+    def append_chunk(self, gyro, acc, game_rv):
+        """
+        Append new data for 1 second (200 samples)
+
+        gyro:    (200, 3)
+        acc:     (200, 3)
+        game_rv: (200, 4)  → rotation vector quaternion (x,y,z,w)
+        """
+
+        gyro = np.asarray(gyro, dtype=np.float32)
+        acc  = np.asarray(acc,  dtype=np.float32)
+        rv   = np.asarray(game_rv, dtype=np.float32)
+
+        if gyro.shape != (200, 3) or acc.shape != (200, 3) or rv.shape != (200, 4):
+            raise ValueError(f"Chunks must be shape (200 samples, dims). Provided shapes: gyro={gyro.shape}, acc={acc.shape}, rv={rv.shape}")
+
+        self.gyro_buf = np.concatenate([self.gyro_buf, gyro], axis=0)
+        self.acc_buf  = np.concatenate([self.acc_buf, acc],  axis=0)
+        self.rv_buf   = np.concatenate([self.rv_buf, rv],   axis=0)
+
+    def __len__(self):
+        if len(self.gyro_buf) < self.window_size:
+            return 0
+        return (len(self.gyro_buf) - self.window_size) // self.stride + 1
+
+    def __getitem__(self, idx):
+        start = idx * self.stride
+        end   = start + self.window_size
+
+        # Slice window
+        gyro = self.gyro_buf[start:end]         # (W, 3)
+        acc  = self.acc_buf[start:end]          # (W, 3)
+        rv   = self.rv_buf[start:end]           # (W, 4)
+
+        # 1) Convert orientation (game_rv) to quaternion array
+        ori_q = quaternion.from_float_array(rv)     # (W,)
+
+        # 2) Build gyro + acc as quaternions with w=0
+        gyro_q = quaternion.from_float_array(
+            np.concatenate([np.zeros((gyro.shape[0], 1)), gyro], axis=1)
+        )
+        acc_q = quaternion.from_float_array(
+            np.concatenate([np.zeros((acc.shape[0], 1)), acc], axis=1)
+        )
+
+        # 3) Rotate into global frame
+        #   q * v * q*
+        glob_gyro = quaternion.as_float_array(ori_q * gyro_q * ori_q.conj())[:, 1:]
+        glob_acc  = quaternion.as_float_array(ori_q * acc_q  * ori_q.conj())[:, 1:]
+
+        # 4) Concatenate final features
+        features = np.concatenate([glob_gyro, glob_acc], axis=1)   # (W, 6)
+
+        return features.T[np.newaxis, :, :]  # (1, 6, W)
+
+
 class GlobSpeedSequence(CompiledSequence):
+    """
+    Dataset :- RoNIN (can be downloaded from http://ronin.cs.sfu.ca/)
+    Features :- raw angular rate and acceleration (includes gravity).
+    """
+    feature_dim = 6
+    target_dim = 2
+    aux_dim = 8
+
+    def __init__(self, data_path=None, **kwargs):
+        super().__init__(**kwargs)
+        self.ts, self.features, self.targets, self.orientations, self.gt_pos = None, None, None, None, None
+        self.info = {}
+
+        self.grv_only = kwargs.get('grv_only', False)
+        self.max_ori_error = kwargs.get('max_ori_error', 20.0)
+        self.w = kwargs.get('interval', 1)
+        if data_path is not None:
+            self.load(data_path)
+
+    def load(self, data_path):
+        if data_path[-1] == '/':
+            data_path = data_path[:-1]
+        with open(osp.join(data_path, 'info.json')) as f:
+            self.info = json.load(f)
+
+        self.info['path'] = osp.split(data_path)[-1]
+
+        self.info['ori_source'], ori, self.info['source_ori_error'] = select_orientation_source(
+            data_path, self.max_ori_error, self.grv_only)
+
+        with h5py.File(osp.join(data_path, 'data.hdf5')) as f:
+            gyro_uncalib = f['synced/gyro_uncalib']
+            acce_uncalib = f['synced/acce']
+            gyro = np.array(f['synced/gyro'] )
+            print("Gyro shape:", gyro.shape)
+            print("Gyro_uncalib shape:", gyro_uncalib.shape)
+            # gyro_uncalib - np.array(self.info['imu_init_gyro_bias'])
+            #acce = np.array(self.info['imu_acce_scale']) * (acce_uncalib - np.array(self.info['imu_acce_bias']))
+            acce = np.array(acce_uncalib)
+            ts = np.copy(f['synced/time'])
+            tango_pos = np.copy(f['pose/tango_pos'])
+            init_tango_ori = quaternion.quaternion(*f['pose/tango_ori'][0]) # 
+        
+
+
+        # Compute the IMU orientation in the Tango coordinate frame.
+        ori_q = quaternion.from_float_array(ori)
+        rot_imu_to_tango = quaternion.quaternion(*self.info['start_calibration']) #
+        init_rotor = init_tango_ori * rot_imu_to_tango * ori_q[0].conj()
+        print("Initial rotor:", init_rotor)
+        #ori_q = init_rotor * ori_q
+
+
+        dt = (ts[self.w:] - ts[:-self.w])[:, None]
+        glob_v = (tango_pos[self.w:] - tango_pos[:-self.w]) / dt
+
+        gyro_q = quaternion.from_float_array(np.concatenate([np.zeros([gyro.shape[0], 1]), gyro], axis=1))
+        acce_q = quaternion.from_float_array(np.concatenate([np.zeros([acce.shape[0], 1]), acce], axis=1))
+        glob_gyro = quaternion.as_float_array(ori_q * gyro_q * ori_q.conj())[:, 1:]
+        glob_acce = quaternion.as_float_array(ori_q * acce_q * ori_q.conj())[:, 1:]
+
+        start_frame = self.info.get('start_frame', 0)
+        self.ts = ts[start_frame:]
+        self.features = np.concatenate([glob_gyro, glob_acce], axis=1)[start_frame:]
+        self.targets = glob_v[start_frame:, :2]
+        self.orientations = quaternion.as_float_array(ori_q)[start_frame:]
+        self.gt_pos = tango_pos[start_frame:]
+
+    def get_feature(self):
+        return self.features
+
+    def get_target(self):
+        return self.targets
+
+    def get_aux(self):
+        return np.concatenate([self.ts[:, None], self.orientations, self.gt_pos], axis=1)
+
+    def get_meta(self):
+        return '{}: device: {}, ori_error ({}): {:.3f}'.format(
+            self.info['path'], self.info['device'], self.info['ori_source'], self.info['source_ori_error'])
+
+class GlobSpeedSequenceLocal(CompiledSequence):
     """
     Dataset :- RoNIN (can be downloaded from http://ronin.cs.sfu.ca/)
     Features :- raw angular rate and acceleration (includes gravity).
@@ -47,6 +204,18 @@ class GlobSpeedSequence(CompiledSequence):
             acce_uncalib = f['synced/acce']
             gyro = gyro_uncalib - np.array(self.info['imu_init_gyro_bias'])
             acce = np.array(self.info['imu_acce_scale']) * (acce_uncalib - np.array(self.info['imu_acce_bias']))
+            rv = f['synced/rv']
+            # rotation vector (x, y, z, w) from Android (make sure order is correct)
+            rv = np.copy(f['synced/rv'])  # (N, 4)
+            q = quaternion.from_float_array(rv)  # convert to quaternion array
+
+            # convert acceleration to quaternion (with w=0)
+            acce_q = quaternion.from_float_array(
+                np.concatenate([np.zeros((acce.shape[0], 1)), acce], axis=1)
+            )
+
+            # rotate acceleration to global frame
+            acce_global = quaternion.as_float_array(q * acce_q * q.conj())[:, 1:]
             ts = np.copy(f['synced/time'])
             tango_pos = np.copy(f['pose/tango_pos'])
             init_tango_ori = quaternion.quaternion(*f['pose/tango_ori'][0])
@@ -67,7 +236,7 @@ class GlobSpeedSequence(CompiledSequence):
 
         start_frame = self.info.get('start_frame', 0)
         self.ts = ts[start_frame:]
-        self.features = np.concatenate([glob_gyro, glob_acce], axis=1)[start_frame:]
+        self.features = np.concatenate([gyro, acce_global], axis=1)[start_frame:] # here the local frame is used
         self.targets = glob_v[start_frame:, :2]
         self.orientations = quaternion.as_float_array(ori_q)[start_frame:]
         self.gt_pos = tango_pos[start_frame:]
