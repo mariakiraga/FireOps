@@ -9,7 +9,7 @@ import quaternion
 
 # URL of your Flask server (update if needed)
 # predict_position endpoint with firefighter_id parameter
-URL = "https://93df9d0e6824.ngrok-free.app/predict_position/FF-101"
+URL = "http://localhost:5000/predict_position/FF-101"
 
 # Constants
 N_SAMPLES = 200

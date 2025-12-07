@@ -179,3 +179,99 @@ unseen_subjects_test_set/
 *.png
 losses.csv 
 *.npy
+
+############################
+# ANDROID / KOTLIN PROJECT #
+############################
+
+# Gradle
+.gradle/
+build/
+*/build/
+local.properties
+
+# Android Studio
+.idea/
+*.iml
+.cache/
+captures/
+.externalNativeBuild/
+.cxx/
+
+# Kotlin / Java
+out/
+*.class
+*.jar
+*.war
+*.ear
+
+# Logs
+*.log
+
+# Generated files
+generated/
+bin/
+gen/
+
+# Keystore files (IMPORTANT – do not commit)
+*.jks
+*.keystore
+
+# OS files
+.DS_Store
+Thumbs.db
+
+
+############################
+# PHP + HTML FRONTEND (www)
+############################
+
+# PHP
+vendor/
+composer.lock
+composer.phar
+
+# Cache / Session dirs
+www/cache/
+www/tmp/
+www/sessions/
+
+# Logs
+www/*.log
+www/logs/
+
+# Node (if used for assets)
+node_modules/
+npm-debug.log
+yarn-error.log
+
+# Frontend build output
+www/dist/
+www/public/build/
+www/public/assets/compiled/
+
+# Environment configs (DO NOT COMMIT)
+.env
+www/.env
+
+
+############################
+# GENERAL
+############################
+
+# IDEs
+.vscode/
+*.swp
+*.swo
+
+
+# System files
+.DS_Store
+Thumbs.db
+desktop.ini
+ehthumbs.db
+
+# Exceptions
+!frontendWWW/*.png
+
+
