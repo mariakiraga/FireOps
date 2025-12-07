@@ -5,6 +5,22 @@ It integrates **inertial navigation**, **UWB ranging**, **biometric sensing**, a
 
 ---
 
+## Quick start
+```bash
+pip install -r requirements.txt
+python app.py # runs flask backend server with model inference
+
+#in separate terminal
+python mock_ubw_client.py # fetches data from https://niesmiertelnik.replit.app/api/v1/firefighters/ and sends them to backend for position estimation
+```
+
+Open http://localhost:5000/firefighters to view json data incoming to the backend server.
+### Frontend application
+
+### Android application
+
+---
+
 ## Problem
 
 Firefighters often operate **inside buildings** or complex facilities where both **GPS** and **reliable communication** are unavailable.  
@@ -152,19 +168,6 @@ Current system can be intergated with our FOKZ Nav Mobile Application for Inerti
 Our application uses Android raw accelerometer and gyroscope signals paired with rotation to map local (phone based) frame into global navigation frame.
 
 The server takes 200Hz imu data and start position and returns new estimated position. 
-
-
-## Usage
-```bash
-pip install -r requirements.txt
-python app.py # runs flask backend server with model inference
-
-#in separate terminal
-python mock_ubw_client.py # fetches data from https://niesmiertelnik.replit.app/api/v1/firefighters/ and sends them to backend for position estimation
-```
-### Frontend application
-
-### Android application
 
 
 
