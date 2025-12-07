@@ -108,7 +108,8 @@ Features:
 - Real-time map with locations and movement history  
 - Firefighter list with filters  
 - Biometric data, movement trends, heart-rate trends, battery status  
-- Alert handling  
+- Alert handling
+- PHP proxy to avoid CORS policy
 
 ### TAK Integration
 - Dockerized TAK Server (Linux)  
