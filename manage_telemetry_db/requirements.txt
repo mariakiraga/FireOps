@@ -1,0 +1,5 @@
+requests
+pyproj
+dotenv
+configparser
+psycopg2-binary
