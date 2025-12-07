@@ -296,9 +296,7 @@ def calculate_position_uwb(firefighter_id):
                 "y": float(estimated_position[1]),
                 "z": float(estimated_position[2]),
                 "floor": 0,
-                "source": "uwb_fusion",
-                "mock_pos_x": mock_pos_x,
-                "mock_pos_y": mock_pos_y
+                "source": "uwb_fusion"
             }
             ff["timestamp"] = time.strftime("%Y-%m-%dT%H:%M:%S.%fZ", time.gmtime())
             ff["gps"] = local_to_gps(float(estimated_position[0]), float(estimated_position[1]))
